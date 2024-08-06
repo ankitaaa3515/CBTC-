@@ -1,74 +1,97 @@
-package com.example.quiz;
+package com.example.converter;
+
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView questionTextView, resultTextView;
-    private RadioGroup answersRadioGroup;
-    private Button submitBtn;
-    private int correctAnswerIndex;
-    private String[] questions = {
-            "1) What is the capital of Maharashtra?",
-            "2) Who sung the song 'Ye vatan'?",
-            "3) What is the largest planet in our solar system?",
-            "4) Who is the first female prime minister of India?",
-            "5) What is the name of the weak zone of the earth’s crust?"
-    };
-    private String[][] answers = {
-            {"Nagpur", "Mumbai", "Pune", "Solapur"},
-            {"Diljit Dosanjh", "Sanam Puri", "Arjit singh", "Darshan Raval"},
-            {"Jupiter", "Saturn", "Neptune", "Earth"},
-            {"Dipika Padukon","Sonia Gandhi","Jaya Bacchan", "Indira Gandhi"},
-            {"Seismic","Cosmic","Formic","Anaemic"}
-    };
-    private int[] correctAnswers = {1, 2, 0, 3, 0};
+    private EditText inputValueEditText;
+    private Spinner unitFromSpinner, unitToSpinner;
+    private Button convertBtn;
+    private TextView resultTextView;
 
-    private int currentQuestion = 0;
-    private int score = 0;
+    private String[] units = {"Centimeters", "Meters", "Grams", "Kilograms"};
+    private double conversionFactor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        questionTextView = findViewById(R.id.questionTextView);
+        inputValueEditText = findViewById(R.id.inputValueEditText);
+        unitFromSpinner = findViewById(R.id.unitFromSpinner);
+        unitToSpinner = findViewById(R.id.unitToSpinner);
+        convertBtn = findViewById(R.id.convertBtn);
         resultTextView = findViewById(R.id.resultTextView);
-        answersRadioGroup = findViewById(R.id.answersRadioGroup);
-        submitBtn = findViewById(R.id.submitBtn);
 
-        loadQuestion();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, units);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        unitFromSpinner.setAdapter(adapter);
+        unitToSpinner.setAdapter(adapter);
 
-        submitBtn.setOnClickListener(new View.OnClickListener() {
+        unitFromSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateConversionFactor();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        unitToSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateConversionFactor();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        convertBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int selectedAnswerIndex = answersRadioGroup.indexOfChild(findViewById(answersRadioGroup.getCheckedRadioButtonId()));
-                if (selectedAnswerIndex == correctAnswerIndex) {
-                    score++;
-                }
-                currentQuestion++;
-                if (currentQuestion < questions.length) {
-                    loadQuestion();
-                } else {
-                    resultTextView.setText("Your score: " + score + "/" + questions.length);
-                    submitBtn.setEnabled(false);
-                }
+                performConversion();
             }
         });
     }
 
-    private void loadQuestion() {
-        questionTextView.setText(questions[currentQuestion]);
-        answersRadioGroup.clearCheck();
-        for (int i = 0; i < answers[currentQuestion].length; i++) {
-            ((RadioButton) answersRadioGroup.getChildAt(i)).setText(answers[currentQuestion][i]);
+    private void updateConversionFactor() {
+        String fromUnit = unitFromSpinner.getSelectedItem().toString();
+        String toUnit = unitToSpinner.getSelectedItem().toString();
+
+        if (fromUnit.equals("Centimeters") && toUnit.equals("Meters")) {
+            conversionFactor = 0.01;
+        } else if (fromUnit.equals("Meters") && toUnit.equals("Centimeters")) {
+            conversionFactor = 100;
+        } else if (fromUnit.equals("Grams") && toUnit.equals("Kilograms")) {
+            conversionFactor = 0.001;
+        } else if (fromUnit.equals("Kilograms") && toUnit.equals("Grams")) {
+            conversionFactor = 1000;
+        } else {
+            conversionFactor = 1;
         }
-        correctAnswerIndex = correctAnswers[currentQuestion];
+    }
+
+    private void performConversion() {
+        String inputValueString = inputValueEditText.getText().toString();
+        if (!inputValueString.isEmpty()) {
+            double inputValue = Double.parseDouble(inputValueString);
+            double resultValue = inputValue * conversionFactor;
+            resultTextView.setText(String.valueOf(resultValue));
+        } else {
+            resultTextView.setText("Please enter a value");
+        }
     }
 }
